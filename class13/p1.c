@@ -36,7 +36,6 @@ int main(int argc, char *argv[]) {
   // Written as i*i <= n to avoid sqrt() function and floating point.
   for (int i = 2; i * i <= n; i++) {
     if (p[i]) {
-      // Optimization: start removing multiples from i*i
       for (int j = i * i; j <= n; j += i) {
         p[j] = false;
       }
