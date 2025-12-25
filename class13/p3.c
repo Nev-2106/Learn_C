@@ -1,85 +1,74 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <string.h>
 
-double pop(void);
-void push(double d);
-double atod(char line[]);
-int depth = 0;
+#define MAX_STACK 100
 
-int main()
-{
-    char op[32];
-    
-    for (;;) {
-        if (scanf("%31s", op) != 1) {
-            while (depth) printf("=> %g\n", pop());
-            break;
-        }
-        
-        if (strcmp(op, "q") == 0) {
-            while (depth) printf("=> %g\n", pop());
-            break;
-        }
-        else if (isdigit(op[0]) || op[0] == '.' || op[0] == '-') {
-            push(atod(op));
-        }
-        else {
-            char c = op[0];
-            switch (c) {
-                case '+': { double r = pop(), l = pop(); push(l + r); } break;
-                case '-': { double r = pop(), l = pop(); push(l - r); } break;
-                case '*': { double r = pop(), l = pop(); push(l * r); } break;
-                case '/': { double r = pop(), l = pop(); push(l / r); } break;
-                case '%': { double r = pop(), l = pop(); push(l - r*(int)(l/r)); } break;
-                default: printf("unknown operator: %c\n", c); break;
+int stack[MAX_STACK];
+int top = -1;
+
+// Basic stack operations
+void push(int val) {
+    if (top < MAX_STACK - 1) {
+        stack[++top] = val;
+    } else {
+        fprintf(stderr, "Error: Stack Overflow\n");
+        exit(1);
+    }
+}
+
+int pop() {
+    if (top >= 0) {
+        return stack[top--];
+    } else {
+        fprintf(stderr, "Error: Stack Underflow (check your expression)\n");
+        exit(1);
+    }
+}
+
+int main() {
+    char ch;
+    int val;
+
+    printf("Enter RPN expression (e.g., 1 2 3*4++): \n");
+
+    // The space before %c tells scanf to skip whitespace
+    while (scanf(" %c", &ch) == 1) {
+        if (isdigit(ch)) {
+            // Put the digit back so scanf("%d") can read the whole number
+            ungetc(ch, stdin);
+            if (scanf("%d", &val) == 1) {
+                push(val);
             }
+        } 
+        else if (ch == '+' || ch == '-' || ch == '*' || ch == '/') {
+            // Pop operands in reverse order
+            int op2 = pop();
+            int op1 = pop();
+            
+            switch (ch) {
+                case '+': push(op1 + op2); break;
+                case '-': push(op1 - op2); break;
+                case '*': push(op1 * op2); break;
+                case '/': 
+                    if (op2 == 0) {
+                        fprintf(stderr, "Error: Division by zero\n");
+                        return 1;
+                    }
+                    push(op1 / op2); 
+                    break;
+            }
+        } 
+        else if (ch == '.') { // Using '.' as a sentinel to print result
+            break;
         }
     }
+
+    if (top >= 0) {
+        printf("Result: %d\n", pop());
+    } else {
+        printf("No result found.\n");
+    }
+
     return 0;
-}
-
-
-double stack[32];
-
-int stackDepth(void) {
-    return depth;
-}
-
-void push(double d) {
-    if (depth >= 32)
-        printf("stack overflow\n");
-    else
-        stack[depth++] = d;
-}
-
-double pop(void) {
-    if (depth < 1) {
-        printf("stack underflow\n");
-        return 0;
-    }
-    return stack[--depth];
-}
-
-double atod(char line[]) {
-    int i = 0;
-    int sign = 1;
-    while (isspace(line[i])) ++i;
-    if (line[i] == '-') {
-        sign = -1;
-        ++i;
-    }
-    double value = 0.0;
-    while (isdigit(line[i])) value = value * 10.0 + line[i++] - '0';
-    if (line[i] == '.') {
-        i++;
-        double scale = 1.0;
-        while (isdigit(line[i])) {
-            value = value * 10.0 + line[i++] - '0';
-            scale *= 10.0;
-        }
-        value /= scale;
-    }
-    return sign * value;
 }
