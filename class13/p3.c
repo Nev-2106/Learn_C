@@ -59,7 +59,7 @@ int main() {
                     break;
             }
         } 
-        else if (ch == '.') { // Using '.' as a sentinel to print result
+        else if (ch == '\n') { // Using '.' as a sentinel to print result
             break;
         }
     }
